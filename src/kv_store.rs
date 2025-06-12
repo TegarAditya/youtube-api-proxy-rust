@@ -66,21 +66,21 @@ impl KVStore {
         rows.next().transpose()
     }
 
-    pub fn delete(&self, key: &str) -> Result<usize> {
+    pub fn clear(&self) -> Result<()> {
         let conn = self.conn.lock().unwrap();
-        let changes = conn.execute("DELETE FROM kv_store WHERE key = ?1", params![key])?;
-        Ok(changes)
+        conn.execute("DELETE FROM kv_store", [])?;
+        Ok(())
     }
 
-    // pub fn clear(&self) -> Result<()> {
+    // pub fn delete(&self, key: &str) -> Result<usize> {
     //     let conn = self.conn.lock().unwrap();
-    //     conn.execute("DELETE FROM kv_store", [])?;
-    //     Ok(())
+    //     let changes = conn.execute("DELETE FROM kv_store WHERE key = ?1", params![key])?;
+    //     Ok(changes)
     // }
 
-    // pub fn health_check(&self) -> Result<()> {
-    //     let conn = self.conn.lock().unwrap();
-    //     conn.execute("SELECT 1", [])?;
-    //     Ok(())
-    // }
+    pub fn health_check(&self) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute("SELECT 1", [])?;
+        Ok(())
+    }
 }
