@@ -1,1 +1,7 @@
 /target
+
+# secret
+.env
+
+# database
+*.sqlite
