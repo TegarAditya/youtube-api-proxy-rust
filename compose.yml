@@ -1,0 +1,26 @@
+services:
+  app:
+    build:
+        context: .
+        dockerfile: Dockerfile
+    ports: [ "${PORT:-3000}:3000" ]
+    env_file: .env
+    environment:
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - PORT=3000
+    volumes: [ "./kv_store.sqlite:/app/kv_store.sqlite" ]
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: "1024M"
+    restart: unless-stopped
+  
+  sql-studio:
+    image: "frectonz/sql-studio"
+    ports:
+      - "${SQL_STUDIO_BIND_IP:-127.0.0.1}:${SQL_STUDIO_BIND_PORT:-3030}:3030"
+    volumes:
+      - "./kv_store.sqlite:/data/kv_store.sqlite"
+    command: ["/bin/sql-studio", "--no-browser", "--no-shutdown", "--address=0.0.0.0:3030", "sqlite", "/data/kv_store.sqlite"]
