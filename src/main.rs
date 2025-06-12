@@ -6,10 +6,15 @@ use crate::kv_store::KVStore;
 use crate::yt_client::YouTubeClient;
 use axum::{
     Router,
+    body::Body,
+    http::{Request, Response},
+    middleware::{self, Next},
     routing::{delete, get},
 };
 use dotenvy::dotenv;
 use std::env;
+use std::time::Instant;
+use tracing::info;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -19,8 +24,35 @@ pub struct AppState {
     cache_ttl_seconds: i64,
 }
 
+async fn log_requests(req: Request<Body>, next: Next) -> Response<Body> {
+    let method = req.method().clone();
+    let uri = req.uri().clone();
+
+    info!("<-- {} {}", method, uri.path());
+
+    let start = Instant::now();
+    let response = next.run(req).await;
+    let latency = start.elapsed();
+
+    info!(
+        "--> {} {} {} {}ms",
+        method,
+        uri.path(),
+        response.status().as_u16(),
+        latency.as_millis()
+    );
+
+    response
+}
+
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt()
+        .with_target(false)
+        .with_ansi(false)
+        .compact()
+        .init();
+
     dotenv().expect(".env file not found");
     let youtube_api_key = env::var("YOUTUBE_API_KEY").expect("YOUTUBE_API_KEY must be set");
     let secret_key = env::var("SECRET_KEY").expect("SECRET_KEY must be set");
@@ -38,19 +70,20 @@ async fn main() {
         cache_ttl_seconds,
     };
 
-    println!("✅ KV store and YouTube client initialized successfully");
+    info!("✅ KV store and YouTube client initialized successfully");
 
     let app = Router::new()
         .route("/api/video/{id}", get(handlers::find_content))
         .route("/api/video/clear", delete(handlers::clear_cache))
         .route("/healthz", get(handlers::health_check))
-        .with_state(state);
+        .with_state(state)
+        .route_layer(middleware::from_fn(log_requests));
 
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", app_port.parse::<u16>().unwrap()))
         .await
         .unwrap();
 
-    println!("✅ Server started successfully on http://0.0.0.0:{}", app_port);
+    info!("✅ Server started successfully on http://0.0.0.0:{}", app_port);
     
     axum::serve(listener, app).await.unwrap();
 }
