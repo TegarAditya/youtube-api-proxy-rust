@@ -1,7 +1,7 @@
-use std::sync::{Arc, Mutex};
-use rusqlite::{Connection, Result, params};
 use chrono::{DateTime, Utc};
+use rusqlite::{Connection, Result, params};
 use serde::Serialize;
+use std::sync::{Arc, Mutex};
 
 #[derive(Serialize)]
 pub struct KeyValue {
@@ -15,11 +15,8 @@ pub struct KVStore {
 }
 
 impl KVStore {
-
     pub fn new(db_path: &str) -> Result<Self> {
-
         let conn = Connection::open(db_path)?;
-
         let store = KVStore {
             conn: Arc::new(Mutex::new(conn)),
         };
@@ -81,7 +78,7 @@ impl KVStore {
 
     pub fn health_check(&self) -> Result<()> {
         let conn = self.conn.lock().unwrap();
-        conn.execute("SELECT 1", [])?;
+        let _: i32 = conn.query_row("SELECT 1", [], |row| row.get(0))?;
         Ok(())
     }
 }
