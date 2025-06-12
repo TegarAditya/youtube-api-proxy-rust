@@ -7,6 +7,7 @@ use axum::{
 use chrono::{Duration, Utc};
 use serde::Deserialize;
 use serde_json;
+use tracing::{error, info, warn};
 
 // --- Utility Function ---
 
@@ -25,7 +26,7 @@ pub async fn find_content(
 ) -> impl IntoResponse {
     if let Ok(Some(cached)) = state.kv_store.get(&id) {
         if is_cache_valid(&cached.cached_at, state.cache_ttl_seconds) {
-            println!("--- HIT {id}; returning cached data.");
+            info!("--- HIT {id}: returning cached data.");
 
             let json_value: serde_json::Value =
                 serde_json::from_str(&cached.value).unwrap_or(serde_json::Value::Null);
@@ -33,9 +34,11 @@ pub async fn find_content(
         }
     }
 
-    println!("--- MISS {id}; fetching new data.");
+    info!("--- MISS {id}: fetching new data.");
 
     if !state.yt_client.is_valid_video_id(&id).await {
+        warn!("--- INVALID {id}: invalid YouTube video ID.");
+
         return Err((
             StatusCode::BAD_REQUEST,
             "Invalid YouTube video ID".to_string(),
@@ -50,13 +53,19 @@ pub async fn find_content(
 
             match serde_json::to_value(new_data) {
                 Ok(json_value) => Ok(Json(json_value)),
-                Err(_) => Err((
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Failed to serialize response".to_string(),
-                )),
+                Err(e) => {
+                    error!("--- ERR {}: {}", id, e);
+                    Err((
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "Failed to serialize response".to_string(),
+                    ))
+                }
             }
         }
-        Err(e) => Err((StatusCode::NOT_FOUND, format!("No data found: {}", e))),
+        Err(e) => {
+            error!("--- ERR {}: {}", id, e);
+            Err((StatusCode::NOT_FOUND, format!("No data found: {}", e)))
+        }
     }
 }
 
@@ -91,6 +100,9 @@ pub async fn clear_cache(
 pub async fn health_check(State(state): State<AppState>) -> impl IntoResponse {
     match state.kv_store.health_check() {
         Ok(_) => (StatusCode::OK, "OK"),
-        Err(_) => (StatusCode::SERVICE_UNAVAILABLE, "Service Unavailable"),
+        Err(e) => {
+            error!("Health check failed: {}", e);
+            (StatusCode::SERVICE_UNAVAILABLE, "Service Unavailable")
+        }
     }
 }
