@@ -29,7 +29,7 @@ async fn main() {
         .compact()
         .init();
 
-    dotenv().expect(".env file not found");
+    dotenv().ok();
     let youtube_api_key = env::var("YOUTUBE_API_KEY").expect("YOUTUBE_API_KEY must be set");
     let secret_key = env::var("SECRET_KEY").expect("SECRET_KEY must be set");
     let app_port = env::var("APP_PORT").unwrap_or_else(|_| "3000".to_string());
