@@ -72,11 +72,12 @@ impl KVStore {
         Ok(())
     }
 
-    // pub fn delete(&self, key: &str) -> Result<usize> {
-    //     let conn = self.conn.lock().unwrap();
-    //     let changes = conn.execute("DELETE FROM kv_store WHERE key = ?1", params![key])?;
-    //     Ok(changes)
-    // }
+    #[allow(dead_code)]
+    pub fn delete(&self, key: &str) -> Result<usize> {
+        let conn = self.conn.lock().unwrap();
+        let changes = conn.execute("DELETE FROM kv_store WHERE key = ?1", params![key])?;
+        Ok(changes)
+    }
 
     pub fn health_check(&self) -> Result<()> {
         let conn = self.conn.lock().unwrap();
