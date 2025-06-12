@@ -61,8 +61,8 @@ pub struct PageInfo {
 #[serde(rename_all = "camelCase")]
 pub struct YouTubeApiResponse {
     pub etag: String,
-    pub items: Vec<YouTubeVideoItem>,
     pub kind: String,
+    pub items: Vec<YouTubeVideoItem>,
     pub page_info: PageInfo,
 }
 
