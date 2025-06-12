@@ -1,25 +1,78 @@
-use reqwest::Client;
+// src/yt_client.rs
 
+// --- Imports ---
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 
-#[derive(Deserialize, Serialize, Debug)]
-pub struct YouTubeSnippet {
-    pub title: String,
-    pub description: String,
+// --- Data Structures for API Responses ---
+// Reordered to precisely match the new JSON structure provided.
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Thumbnail {
+    pub height: u32,
+    pub url: String,
+    pub width: u32,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Thumbnails {
+    pub default: Thumbnail,
+    pub high: Thumbnail,
+    pub maxres: Option<Thumbnail>,
+    pub medium: Thumbnail,
+    pub standard: Option<Thumbnail>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Localized {
+    pub description: String,
+    pub title: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct YouTubeSnippet {
+    pub category_id: String,
+    pub channel_id: String,
+    pub channel_title: String,
+    pub description: String,
+    pub live_broadcast_content: String,
+    pub localized: Localized,
+    pub published_at: String,
+    pub thumbnails: Thumbnails,
+    pub title: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct YouTubeVideoItem {
+    pub etag: String,
     pub id: String,
+    pub kind: String,
     pub snippet: YouTubeSnippet,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
-pub struct YouTubeApiResponse {
-    pub items: Vec<YouTubeVideoItem>,
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct PageInfo {
+    pub results_per_page: u32,
+    pub total_results: u32,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct YouTubeApiResponse {
+    pub etag: String,
+    pub items: Vec<YouTubeVideoItem>,
+    pub kind: String,
+    pub page_info: PageInfo,
+}
+
+// --- YouTube Client ---
 #[derive(Clone)]
 pub struct YouTubeClient {
     client: Client,
@@ -34,6 +87,7 @@ impl YouTubeClient {
         }
     }
 
+    /// Validates a YouTube video ID by checking the oEmbed endpoint.
     pub async fn is_valid_video_id(&self, video_id: &str) -> bool {
         let url = format!(
             "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={}&format=json",
@@ -46,6 +100,7 @@ impl YouTubeClient {
         }
     }
 
+    /// Fetches content data for a given YouTube video ID using the YouTube Data API.
     pub async fn get_video_data(
         &self,
         video_id: &str,
