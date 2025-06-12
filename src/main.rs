@@ -1,69 +1,52 @@
+mod handlers;
 mod kv_store;
+mod yt_client;
 
-use crate::kv_store::{KVStore, KeyValue};
+use crate::kv_store::KVStore;
+use crate::yt_client::YouTubeClient;
 use axum::{
     Router,
-    extract::{Path, State},
-    http::StatusCode,
-    response::Json,
-    routing::get,
+    routing::{delete, get},
 };
-use serde::{Deserialize};
+use dotenvy::dotenv;
+use std::env;
+
+#[derive(Clone)]
+pub struct AppState {
+    kv_store: KVStore,
+    yt_client: YouTubeClient,
+    secret_key: String,
+    cache_ttl_seconds: i64,
+}
 
 #[tokio::main]
 async fn main() {
-    let store = KVStore::new("kv_store.sqlite").expect("Failed to initialize KVStore");
+    dotenv().expect(".env file not found");
+    let youtube_api_key = env::var("YOUTUBE_API_KEY").expect("YOUTUBE_API_KEY must be set");
+    let secret_key = env::var("SECRET_KEY").expect("SECRET_KEY must be set");
 
-    println!("✅ KV store initialized successfully");
+    let cache_ttl_seconds = env::var("CACHE_TTL_SECONDS")
+        .ok()
+        .and_then(|s| s.parse::<i64>().ok())
+        .unwrap_or(86400);
+
+    let state = AppState {
+        kv_store: KVStore::new("kv_store.sqlite").expect("Failed to initialize KVStore"),
+        yt_client: YouTubeClient::new(youtube_api_key),
+        secret_key,
+        cache_ttl_seconds,
+    };
+
+    println!("✅ KV store and YouTube client initialized successfully");
 
     let app = Router::new()
-        .route("/", get(root_handler))
-        .route("/kv/:key", get(get_key).post(set_key).delete(delete_key))
-        .with_state(store);
+        .route("/api/video/{id}", get(handlers::find_content))
+        .route("/api/video/clear", delete(handlers::clear_cache))
+        .route("/healthz", get(handlers::health_check))
+        .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
 
-    println!("✅ Server started successfully on http://127.0.0.1:3000");
+    println!("✅ Server started successfully on http://0.0.0.0:3000");
     axum::serve(listener, app).await.unwrap();
-}
-
-async fn root_handler() -> &'static str {
-    "Hello, World from Axum with SQLite!"
-}
-
-#[derive(Deserialize)]
-struct SetValuePayload {
-    value: String,
-}
-
-async fn set_key(
-    State(store): State<KVStore>,
-    Path(key): Path<String>,
-    Json(payload): Json<SetValuePayload>,
-) -> StatusCode {
-    match store.set(&key, &payload.value) {
-        Ok(_) => StatusCode::OK,
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
-    }
-}
-
-async fn get_key(
-    State(store): State<KVStore>,
-    Path(key): Path<String>,
-) -> Result<Json<KeyValue>, StatusCode> {
-    match store.get(&key) {
-        Ok(Some(kv)) => Ok(Json(kv)),
-        Ok(None) => Err(StatusCode::NOT_FOUND),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
-}
-
-async fn delete_key(State(store): State<KVStore>, Path(key): Path<String>) -> StatusCode {
-    match store.delete(&key) {
-        Ok(0) => StatusCode::NOT_FOUND,
-        Ok(_) => StatusCode::OK,
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
-    }
 }
