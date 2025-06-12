@@ -1,19 +1,16 @@
 mod handlers;
 mod kv_store;
+mod logger;
 mod yt_client;
 
+use crate::logger::log_requests;
 use crate::kv_store::KVStore;
 use crate::yt_client::YouTubeClient;
 use axum::{
-    Router,
-    body::Body,
-    http::{Request, Response},
-    middleware::{self, Next},
-    routing::{delete, get},
+    middleware::{self}, routing::{delete, get}, Router
 };
 use dotenvy::dotenv;
 use std::env;
-use std::time::Instant;
 use tracing::info;
 
 #[derive(Clone)]
@@ -22,27 +19,6 @@ pub struct AppState {
     yt_client: YouTubeClient,
     secret_key: String,
     cache_ttl_seconds: i64,
-}
-
-async fn log_requests(req: Request<Body>, next: Next) -> Response<Body> {
-    let method = req.method().clone();
-    let uri = req.uri().clone();
-
-    info!("<-- {} {}", method, uri.path());
-
-    let start = Instant::now();
-    let response = next.run(req).await;
-    let latency = start.elapsed();
-
-    info!(
-        "--> {} {} {} {}ms",
-        method,
-        uri.path(),
-        response.status().as_u16(),
-        latency.as_millis()
-    );
-
-    response
 }
 
 #[tokio::main]
@@ -83,7 +59,7 @@ async fn main() {
         .await
         .unwrap();
 
-    info!("✅ Server started successfully on http://0.0.0.0:{}", app_port);
+    info!("✅ Server started successfully on http://0.0.0.0:{app_port}");
     
     axum::serve(listener, app).await.unwrap();
 }
