@@ -1,12 +1,6 @@
-// src/yt_client.rs
-
-// --- Imports ---
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
-
-// --- Data Structures for API Responses ---
-// Reordered to precisely match the new JSON structure provided.
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -72,7 +66,6 @@ pub struct YouTubeApiResponse {
     pub page_info: PageInfo,
 }
 
-// --- YouTube Client ---
 #[derive(Clone)]
 pub struct YouTubeClient {
     client: Client,
