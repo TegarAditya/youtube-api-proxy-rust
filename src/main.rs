@@ -3,11 +3,13 @@ mod kv_store;
 mod logger;
 mod yt_client;
 
-use crate::logger::log_requests;
 use crate::kv_store::KVStore;
+use crate::logger::log_requests;
 use crate::yt_client::YouTubeClient;
 use axum::{
-    middleware::{self}, routing::{delete, get}, Router
+    Router,
+    middleware::{self},
+    routing::{delete, get},
 };
 use dotenvy::dotenv;
 use std::env;
@@ -32,7 +34,7 @@ async fn main() {
     dotenv().ok();
     let youtube_api_key = env::var("YOUTUBE_API_KEY").expect("YOUTUBE_API_KEY must be set");
     let secret_key = env::var("SECRET_KEY").expect("SECRET_KEY must be set");
-    let app_port = env::var("APP_PORT").unwrap_or_else(|_| "3000".to_string());
+    let app_port = env::var("PORT").unwrap_or_else(|_| "3000".to_string());
 
     let cache_ttl_seconds = env::var("CACHE_TTL_SECONDS")
         .ok()
@@ -60,6 +62,6 @@ async fn main() {
         .unwrap();
 
     info!("✅ Server started successfully on http://0.0.0.0:{app_port}");
-    
+
     axum::serve(listener, app).await.unwrap();
 }
