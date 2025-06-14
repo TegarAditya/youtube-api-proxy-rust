@@ -120,9 +120,9 @@ curl http://localhost:3000/api/video/dQw4w9WgXcQ
 ### 2. Clear Cache
 Deletes all entries from the cache database. This is a protected endpoint that requires the SECRET_KEY from your .env file.
 
-Endpoint: DELETE /contents
+Endpoint: `DELETE /api/video/clear`
 
-Query Parameter: key=<your_secret_key>
+Query Parameter: `key=<your_secret_key>`
 
 Success Response (200 OK):
 ```
@@ -131,13 +131,13 @@ Cache cleared successfully
 
 Example using curl:
 ```bash
-curl -X DELETE "http://localhost:3000/contents?key=your-super-secret-key-for-clearing-cache"
+curl -X DELETE "http://localhost:3000/api/video/clear?key=your-super-secret-key-for-clearing-cache"
 ```
 
 ### 3. Health Check
 Checks the status of the service, primarily its ability to connect to the database.
 
-Endpoint: GET /healthz
+Endpoint: `GET /healthz`
 
 Success Response (200 OK):
 
