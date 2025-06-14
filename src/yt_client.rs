@@ -1,6 +1,7 @@
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
+use function_timer::time;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -81,6 +82,7 @@ impl YouTubeClient {
     }
 
     /// Validates a YouTube video ID by checking the oEmbed endpoint.
+    #[time]
     pub async fn is_valid_video_id(&self, video_id: &str) -> bool {
         let url = format!(
             "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={}&format=json",
@@ -94,6 +96,7 @@ impl YouTubeClient {
     }
 
     /// Fetches content data for a given YouTube video ID using the YouTube Data API.
+    #[time]
     pub async fn get_video_data(
         &self,
         video_id: &str,
