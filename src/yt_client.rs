@@ -1,7 +1,7 @@
+use function_timer::time;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
-use function_timer::time;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
