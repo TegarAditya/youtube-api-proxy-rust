@@ -226,7 +226,7 @@ dependencies = [
 [[package]]
 name = "function_timer"
 version = "0.1.0"
-source = "git+https://github.com/TegarAditya/function_timer/#4fc2cfcab470289f4b7c90138a41d5d03aea81b5"
+source = "git+https://github.com/TegarAditya/function_timer/?rev=4fc2cfcab470289f4b7c90138a41d5d03aea81b5#4fc2cfcab470289f4b7c90138a41d5d03aea81b5"
 dependencies = [
  "proc-macro2",
  "quote",
