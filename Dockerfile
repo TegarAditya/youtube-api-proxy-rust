@@ -27,4 +27,4 @@ COPY --from=builder \
 
 EXPOSE 3000
 
-CMD ["/app/youtube-api-proxy-rust"]
+CMD ["/app/youtube-api-proxy-rust", "--no-timer"]
