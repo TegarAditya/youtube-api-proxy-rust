@@ -1,4 +1,4 @@
-mod handlers;
+mod handler;
 mod kv_store;
 mod logger;
 mod yt_client;
@@ -93,9 +93,9 @@ async fn main() {
         .layer(middleware::from_fn(log_requests));
 
     let app = Router::new()
-        .route("/api/video/{id}", get(handlers::find_content))
-        .route("/api/video/clear", delete(handlers::clear_cache))
-        .route("/healthz", get(handlers::health_check))
+        .route("/api/video/{id}", get(handler::find_content))
+        .route("/api/video/clear", delete(handler::clear_cache))
+        .route("/healthz", get(handler::health_check))
         .with_state(state)
         .layer(middleware_stack);
 
