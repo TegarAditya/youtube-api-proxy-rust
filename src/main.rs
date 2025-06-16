@@ -12,19 +12,11 @@ use axum::{
     middleware::{self},
     routing::{delete, get},
 };
-use clap::Parser;
 use dotenvy::dotenv;
 use std::env;
 use tower::ServiceBuilder;
 use tower_http::set_header::SetResponseHeaderLayer;
 use tracing::info;
-
-#[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Cli {
-    #[arg(long, default_value_t = false)]
-    no_timer: bool,
-}
 
 #[derive(Clone)]
 pub struct AppState {
@@ -36,18 +28,6 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() {
-    let cli = Cli::parse();
-
-    if cli.no_timer {
-        unsafe {
-            env::set_var("ENABLE_FUNCTION_TIMER", "false");
-        }
-    } else {
-        unsafe {
-            env::set_var("ENABLE_FUNCTION_TIMER", "true");
-        }
-    }
-
     tracing_subscriber::fmt()
         .with_target(false)
         .with_ansi(false)

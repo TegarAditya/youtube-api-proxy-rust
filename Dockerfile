@@ -30,4 +30,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 CMD ["wget", "--spider", "-q", "http://localhost:3000/healthz"]
 
-CMD ["/app/youtube-api-proxy-rust", "--no-timer"]
+CMD ["/app/youtube-api-proxy-rust"]

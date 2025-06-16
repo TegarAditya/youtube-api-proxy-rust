@@ -15,6 +15,5 @@ tokio = { version = "1.45.1", features = ["full"] }
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
 function_timer = { git = "https://github.com/TegarAditya/function_timer/", rev = "55b2ae544bbd84c65ee53da6988f2140ba45dba7"}
-clap = { version = "4.5.40", features = ["derive"] }
 tower = "0.5.2"
 tower-http = { version = "0.6.6", features = ["set-header"] }
