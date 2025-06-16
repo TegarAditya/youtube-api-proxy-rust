@@ -11,7 +11,6 @@ use tracing::{error, info, warn};
 
 // --- Utility Function ---
 
-/// Checks if the cached data is still valid based on the TTL (Time To Live).
 fn is_cache_valid(cached_at: &chrono::DateTime<Utc>, ttl_seconds: i64) -> bool {
     let expiration_time = *cached_at + Duration::seconds(ttl_seconds);
     expiration_time > Utc::now()
@@ -19,7 +18,6 @@ fn is_cache_valid(cached_at: &chrono::DateTime<Utc>, ttl_seconds: i64) -> bool {
 
 // --- Handlers for the API Endpoints ---
 
-/// Handler to find content by YouTube video ID.
 pub async fn find_content(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -76,7 +74,6 @@ pub struct ClearCacheQuery {
     key: String,
 }
 
-/// Handler to clear the cache, protected by a secret key.
 pub async fn clear_cache(
     State(state): State<AppState>,
     Query(query): Query<ClearCacheQuery>,
@@ -96,7 +93,6 @@ pub async fn clear_cache(
 
 // --- Health Check Handler ---
 
-/// Handler for the health check endpoint.
 pub async fn health_check(State(state): State<AppState>) -> impl IntoResponse {
     match state.kv_store.health_check() {
         Ok(_) => (StatusCode::OK, "OK"),
