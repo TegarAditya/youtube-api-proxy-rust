@@ -8,12 +8,15 @@ use crate::logger::log_requests;
 use crate::yt_client::YouTubeClient;
 use axum::{
     Router,
+    http::{HeaderValue, header},
     middleware::{self},
     routing::{delete, get},
 };
 use clap::Parser;
 use dotenvy::dotenv;
 use std::env;
+use tower::ServiceBuilder;
+use tower_http::set_header::SetResponseHeaderLayer;
 use tracing::info;
 
 #[derive(Parser, Debug)]
@@ -70,12 +73,31 @@ async fn main() {
 
     info!("✅ KV store and YouTube client initialized successfully");
 
+    let middleware_stack = ServiceBuilder::new()
+        .layer(SetResponseHeaderLayer::if_not_present(
+            header::STRICT_TRANSPORT_SECURITY,
+            HeaderValue::from_static("max-age=63072000; includeSubDomains; preload"),
+        ))
+        .layer(SetResponseHeaderLayer::if_not_present(
+            header::CONTENT_SECURITY_POLICY,
+            HeaderValue::from_static("default-src 'self'"),
+        ))
+        .layer(SetResponseHeaderLayer::if_not_present(
+            header::X_CONTENT_TYPE_OPTIONS,
+            HeaderValue::from_static("nosniff"),
+        ))
+        .layer(SetResponseHeaderLayer::if_not_present(
+            header::X_FRAME_OPTIONS,
+            HeaderValue::from_static("DENY"),
+        ))
+        .layer(middleware::from_fn(log_requests));
+
     let app = Router::new()
         .route("/api/video/{id}", get(handlers::find_content))
         .route("/api/video/clear", delete(handlers::clear_cache))
         .route("/healthz", get(handlers::health_check))
         .with_state(state)
-        .route_layer(middleware::from_fn(log_requests));
+        .layer(middleware_stack);
 
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", app_port.parse::<u16>().unwrap()))
         .await
