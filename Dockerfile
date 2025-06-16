@@ -17,7 +17,7 @@ COPY ./src ./src
 RUN cargo build --release --locked --target x86_64-unknown-linux-musl
 
 # stage 2: static distroless runner
-FROM gcr.io/distroless/static-debian12 AS runner
+FROM busybox:stable-musl AS runner
 
 WORKDIR /app
 
@@ -26,5 +26,8 @@ COPY --from=builder \
     /app/youtube-api-proxy-rust
 
 EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+CMD ["wget", "--spider", "-q", "http://localhost:3000/healthz"]
 
 CMD ["/app/youtube-api-proxy-rust", "--no-timer"]
