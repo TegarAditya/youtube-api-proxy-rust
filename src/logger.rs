@@ -10,6 +10,10 @@ pub async fn log_requests(req: Request<Body>, next: Next) -> Response<Body> {
     let method = req.method().clone();
     let uri = req.uri().clone();
 
+    if uri.path() == "/healthz" {
+        return next.run(req).await;
+    }
+
     info!("<-- {} {}", method, uri.path());
 
     let start = Instant::now();
