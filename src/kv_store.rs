@@ -27,7 +27,6 @@ impl KVStore {
 
     fn init(&self) -> Result<()> {
         let conn = self.conn.lock().unwrap();
-
         conn.execute(
             "CREATE TABLE IF NOT EXISTS kv_store (
                 key       TEXT PRIMARY KEY,
@@ -52,7 +51,7 @@ impl KVStore {
     pub fn get(&self, key: &str) -> Result<Option<KeyValue>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare("SELECT value, cached_at FROM kv_store WHERE key = ?1")?;
-
+        
         let mut rows = stmt.query_map(params![key], |row| {
             Ok(KeyValue {
                 value: row.get(0)?,
