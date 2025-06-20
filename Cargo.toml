@@ -17,3 +17,5 @@ tracing-subscriber = "0.3.19"
 function_timer = { git = "https://github.com/TegarAditya/function_timer/", rev = "55b2ae544bbd84c65ee53da6988f2140ba45dba7"}
 tower = "0.5.2"
 tower-http = { version = "0.6.6", features = ["set-header"] }
+r2d2 = "0.8.10"
+r2d2_sqlite = "0.30.0"
