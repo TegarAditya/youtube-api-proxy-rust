@@ -27,4 +27,10 @@ services:
       - "${SQL_STUDIO_BIND_IP:-127.0.0.1}:${SQL_STUDIO_BIND_PORT:-3030}:3030"
     volumes:
       - "./kv_store.sqlite:/data/kv_store.sqlite"
-    command: ["/bin/sql-studio", "--no-browser", "--no-shutdown", "--address=0.0.0.0:3030", "sqlite", "/data/kv_store.sqlite"]
+    command: 
+      - "/bin/sql-studio"
+      - "--no-browser"
+      - "--no-shutdown"
+      - "--address=0.0.0.0:3030"
+      - "sqlite"
+      - "/data/kv_store.sqlite"
