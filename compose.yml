@@ -10,12 +10,15 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - PORT=3000
       - ENABLE_FUNCTION_TIMER=${ENABLE_FUNCTION_TIMER:-false}
-    volumes: [ "./kv_store.sqlite:/app/kv_store.sqlite" ]
+    volumes: 
+      - "./kv_store.sqlite:/app/kv_store.sqlite"
+      - "./kv_store.sqlite-shm:/app/kv_store.sqlite-shm"
+      - "./kv_store.sqlite-wal:/app/kv_store.sqlite-wal"
     deploy:
       resources:
         limits:
           cpus: "2"
-          memory: "1024M"
+          memory: "2048M"
     restart: unless-stopped
   
   sql-studio:
