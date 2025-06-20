@@ -1,82 +1,63 @@
 use axum::{
     body::Body,
-    http::{HeaderName, Request, Response, header},
+    http::{HeaderName, HeaderValue, Request, Response, header},
     middleware::Next,
 };
+use std::sync::OnceLock;
+
+static HEADERS_TO_ADD: OnceLock<Vec<(HeaderName, HeaderValue)>> = OnceLock::new();
+
+fn get_headers() -> &'static [(HeaderName, HeaderValue)] {
+    HEADERS_TO_ADD.get_or_init(|| {
+        vec![
+            (
+                header::STRICT_TRANSPORT_SECURITY,
+                HeaderValue::from_static("max-age=63072000; includeSubDomains; preload"),
+            ),
+            (
+                header::CONTENT_SECURITY_POLICY,
+                HeaderValue::from_static("default-src 'self'"),
+            ),
+            (
+                header::X_CONTENT_TYPE_OPTIONS,
+                HeaderValue::from_static("nosniff"),
+            ),
+            (
+                header::X_FRAME_OPTIONS, 
+                HeaderValue::from_static("DENY")),
+            (
+                header::REFERRER_POLICY,
+                HeaderValue::from_static("no-referrer"),
+            ),
+            (
+                header::X_XSS_PROTECTION, 
+                HeaderValue::from_static("0")
+            ),
+            (
+                HeaderName::from_static("origin-agent-cluster"),
+                HeaderValue::from_static("?1"),
+            ),
+            (
+                HeaderName::from_static("x-dns-prefetch-control"),
+                HeaderValue::from_static("off"),
+            ),
+            (
+                HeaderName::from_static("x-download-options"),
+                HeaderValue::from_static("noopen"),
+            ),
+            (
+                HeaderName::from_static("x-permitted-cross-domain-policies"),
+                HeaderValue::from_static("none"),
+            ),
+        ]
+    })
+}
 
 pub async fn secure_headers(req: Request<Body>, next: Next) -> Response<Body> {
     let mut response = next.run(req).await;
     let headers = response.headers_mut();
 
-    headers.insert(
-        header::STRICT_TRANSPORT_SECURITY,
-        "max-age=63072000; includeSubDomains; preload"
-            .parse()
-            .unwrap(),
-    );
-
-    headers.insert(
-        header::CONTENT_SECURITY_POLICY,
-        "default-src 'self'"
-            .parse()
-            .unwrap(),
-    );
-
-    headers.insert(
-        header::X_CONTENT_TYPE_OPTIONS, 
-        "nosniff"
-            .parse()
-            .unwrap()
-    );
-
-    headers.insert(
-        header::X_FRAME_OPTIONS, 
-        "DENY"
-            .parse()
-            .unwrap()
-    );
-
-    headers.insert(
-        header::REFERRER_POLICY, 
-        "no-referrer"
-            .parse()
-            .unwrap()
-    );
-
-    headers.insert(
-        HeaderName::from_static("origin-agent-cluster"),
-        "?1"
-            .parse()
-            .unwrap(),
-    );
-
-    headers.insert(
-        HeaderName::from_static("x-dns-prefetch-control"),
-        "off"
-            .parse()
-            .unwrap(),
-    );
-
-    headers.insert(
-        HeaderName::from_static("x-download-options"),
-        "noopen"
-            .parse()
-            .unwrap(),
-    );
-
-    headers.insert(
-        HeaderName::from_static("x-permitted-cross-domain-policies"),
-        "none"
-            .parse()
-            .unwrap(),
-    );
-
-    headers.insert(
-        HeaderName::from_static("x-xss-protection"),
-        "0"
-            .parse()
-            .unwrap(),
-    );
+    headers.extend(get_headers().iter().cloned());
 
     headers.remove("x-powered-by");
 
