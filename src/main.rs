@@ -7,7 +7,6 @@ use crate::kv_store::KVStore;
 use crate::yt_client::YouTubeClient;
 use axum::{
     Router,
-    middleware as axum_middleware,
     routing::{delete, get},
 };
 use dotenvy::dotenv;
@@ -51,8 +50,8 @@ async fn main() {
     info!("✅ KV store and YouTube client initialized successfully");
 
     let middleware_stack = ServiceBuilder::new()
-        .layer(axum_middleware::from_fn(middleware::helmet::secure_headers))
-        .layer(axum_middleware::from_fn(middleware::logger::log_requests));
+        .layer(axum::middleware::from_fn(middleware::helmet::secure_headers))
+        .layer(axum::middleware::from_fn(middleware::logger::log_requests));
 
     let app = Router::new()
         .route("/api/video/{id}", get(handler::find_content))
