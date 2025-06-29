@@ -50,8 +50,8 @@ async fn main() {
     info!("✅ KV store and YouTube client initialized successfully");
 
     let middleware_stack = ServiceBuilder::new()
-        .layer(axum::middleware::from_fn(middleware::helmet::secure_headers))
-        .layer(axum::middleware::from_fn(middleware::logger::log_requests));
+        .layer(middleware::logger::LoggerLayer)
+        .layer(middleware::helmet::SecureHeadersLayer);
 
     let app = Router::new()
         .route("/api/video/{id}", get(handler::find_content))
