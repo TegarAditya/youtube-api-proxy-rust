@@ -102,3 +102,7 @@ pub async fn health_check(State(state): State<AppState>) -> impl IntoResponse {
         }
     }
 }
+
+pub async fn favicon() -> impl IntoResponse {
+    ([(axum::http::header::CONTENT_TYPE, "image/x-icon")], include_bytes!("../static/favicon.ico").to_vec())
+}
