@@ -1,32 +1,72 @@
 use axum::{
     body::Body,
     http::{Request, Response},
-    middleware::Next,
 };
-use std::time::Instant;
+use std::{
+    future::Future,
+    pin::Pin,
+    task::{Context, Poll},
+    time::Instant,
+};
+use tower::{Layer, Service};
 use tracing::info;
 
-pub async fn log_requests(req: Request<Body>, next: Next) -> Response<Body> {
-    let method = req.method().clone();
-    let uri = req.uri().clone();
+#[derive(Clone)]
+pub struct LoggerLayer;
 
-    if uri.path() == "/healthz" {
-        return next.run(req).await;
+impl<S> Layer<S> for LoggerLayer {
+    type Service = LoggerMiddleware<S>;
+
+    fn layer(&self, inner: S) -> Self::Service {
+        LoggerMiddleware { inner }
+    }
+}
+
+#[derive(Clone)]
+pub struct LoggerMiddleware<S> {
+    inner: S,
+}
+
+impl<S, ReqBody> Service<Request<ReqBody>> for LoggerMiddleware<S>
+where
+    S: Service<Request<ReqBody>, Response = Response<Body>> + Clone + Send + 'static,
+    S::Future: Send + 'static,
+    ReqBody: Send + 'static,
+{
+    type Response = Response<Body>;
+    type Error = S::Error;
+    type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>>;
+
+    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        self.inner.poll_ready(cx)
     }
 
-    info!("<-- {} {}", method, uri.path());
+    fn call(&mut self, req: Request<ReqBody>) -> Self::Future {
+        let method = req.method().clone();
+        let uri = req.uri().clone();
 
-    let start = Instant::now();
-    let response = next.run(req).await;
-    let latency = start.elapsed();
+        let mut inner = self.inner.clone();
 
-    info!(
-        "--> {} {} {} {}ms",
-        method,
-        uri.path(),
-        response.status().as_u16(),
-        latency.as_millis()
-    );
+        Box::pin(async move {
+            if uri.path() == "/healthz" {
+                return inner.call(req).await;
+            }
 
-    response
+            info!("<-- {} {}", method, uri.path());
+            let start = Instant::now();
+
+            let response = inner.call(req).await?;
+
+            let elapsed = start.elapsed();
+            info!(
+                "--> {} {} {} {}ms",
+                method,
+                uri.path(),
+                response.status().as_u16(),
+                elapsed.as_millis()
+            );
+
+            Ok(response)
+        })
+    }
 }
