@@ -57,6 +57,7 @@ async fn main() {
         .route("/api/video/{id}", get(handler::find_content))
         .route("/api/video/clear", delete(handler::clear_cache))
         .route("/healthz", get(handler::health_check))
+        .route("/favicon.ico", get(handler::favicon))
         .with_state(state)
         .layer(middleware_stack);
 
