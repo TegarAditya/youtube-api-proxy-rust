@@ -1,9 +1,11 @@
 use axum::{
     body::Body,
-    http::{Request, Response},
+    extract::ConnectInfo,
+    http::{header, Request, Response},
 };
 use std::{
     future::Future,
+    net::SocketAddr,
     pin::Pin,
     task::{Context, Poll},
     time::Instant,
@@ -44,6 +46,19 @@ where
     fn call(&mut self, req: Request<ReqBody>) -> Self::Future {
         let method = req.method().clone();
         let uri = req.uri().clone();
+        
+        let ip = req
+            .extensions()
+            .get::<ConnectInfo<SocketAddr>>()
+            .map(|ci| ci.0.to_string())
+            .unwrap_or_else(|| "unknown".to_string());
+
+        let user_agent = req
+            .headers()
+            .get(header::USER_AGENT)
+            .and_then(|value| value.to_str().ok())
+            .unwrap_or("unknown")
+            .to_string();
 
         let mut inner = self.inner.clone();
 
@@ -52,14 +67,20 @@ where
                 return inner.call(req).await;
             }
 
-            info!("<-- {} {}", method, uri.path());
+            info!(
+                "<-- {} {} | {} [{}]",
+                method,
+                uri.path(),
+                ip,
+                user_agent
+            );
             let start = Instant::now();
 
             let response = inner.call(req).await?;
 
             let elapsed = start.elapsed();
             info!(
-                "--> {} {} {} {}ms",
+                "--> {} {} {} in {}ms",
                 method,
                 uri.path(),
                 response.status().as_u16(),
