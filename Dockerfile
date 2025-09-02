@@ -7,6 +7,8 @@ RUN rustup target add x86_64-unknown-linux-musl
 
 WORKDIR /usr/src/app
 
+COPY ./static/favicon.ico ./static/favicon.ico
+
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs
 RUN cargo build --release --locked
