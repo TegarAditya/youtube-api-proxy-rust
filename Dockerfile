@@ -1,5 +1,5 @@
 # stage 1: builder with musl target
-FROM rust:1.87-alpine AS builder
+FROM rust:1.93-alpine AS builder
 
 RUN apk add --no-cache musl-dev openssl-dev pkgconfig
 
