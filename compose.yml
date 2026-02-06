@@ -18,7 +18,7 @@ services:
       resources:
         limits:
           cpus: "2"
-          memory: "2048M"
+          memory: "1024M"
     restart: unless-stopped
   
   sql-studio:
@@ -34,3 +34,9 @@ services:
       - "--address=0.0.0.0:3030"
       - "sqlite"
       - "/data/kv_store.sqlite"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: "512M"
+    restart: unless-stopped
