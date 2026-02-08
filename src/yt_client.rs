@@ -82,6 +82,25 @@ impl YouTubeClient {
     }
 
     #[time]
+    pub async fn healthcheck(&self) -> bool {
+        let (youtube_ok, googleapis_ok) = tokio::join!(
+            self.ping_endpoint("https://www.youtube.com"),
+            self.ping_endpoint("https://www.googleapis.com"),
+        );
+
+        youtube_ok && googleapis_ok
+    }
+
+    async fn ping_endpoint(&self, url: &str) -> bool {
+        self.client
+            .get(url)
+            .send()
+            .await
+            .map(|resp| !resp.status().is_server_error())
+            .unwrap_or(false)
+    }
+
+    #[time]
     pub async fn is_valid_video_id(&self, video_id: &str) -> bool {
         let url = format!(
             "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={}&format=json",

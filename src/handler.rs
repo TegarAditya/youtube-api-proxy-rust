@@ -94,13 +94,22 @@ pub async fn clear_cache(
 // --- Health Check Handler ---
 
 pub async fn health_check(State(state): State<AppState>) -> impl IntoResponse {
-    match state.kv_store.health_check() {
-        Ok(_) => (StatusCode::OK, "OK"),
-        Err(e) => {
-            error!("Health check failed: {}", e);
-            (StatusCode::SERVICE_UNAVAILABLE, "Service Unavailable")
-        }
+    let kv_result = state.kv_store.health_check();
+    let yt_ok = state.yt_client.healthcheck().await;
+
+    if kv_result.is_ok() && yt_ok {
+        return (StatusCode::OK, "OK");
     }
+
+    if let Err(e) = kv_result {
+        error!("Health check kv_store failed: {}", e);
+    }
+
+    if !yt_ok {
+        error!("Health check YouTube client failed");
+    }
+
+    (StatusCode::SERVICE_UNAVAILABLE, "Service Unavailable")
 }
 
 pub async fn favicon() -> impl IntoResponse {
